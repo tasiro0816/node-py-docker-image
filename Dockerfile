@@ -16,7 +16,7 @@ WORKDIR /home/container
 
 COPY --chown=container:container . .
 
-RUN npm ci --only=production
+RUN npm install --omit=dev
 
 ENTRYPOINT ["/usr/bin/tini", "-g", "--"]
 CMD ["node", "index.js"]
