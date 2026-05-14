@@ -8,7 +8,7 @@ WORKDIR /home/container
 RUN mkdir -p /home/container/.ssh && chmod 700 /home/container/.ssh
 
 # 事前に作成した秘密鍵をコピー（ファイル名は実際の鍵に合わせてください）
-COPY --chown=container:container id_rsa /home/container/.ssh/id_ed25519
+COPY --chown=container:container id_ed25519 /home/container/.ssh/id_ed25519
 RUN chmod 600 /home/container/.ssh/id_ed25519
 
 # 初回接続時の「Yes/No」確認をスキップする設定
