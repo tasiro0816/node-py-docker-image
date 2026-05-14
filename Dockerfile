@@ -1,20 +1,17 @@
 FROM node:25-bookworm-slim
-RUN apt update && apt install -y git ssh && rm -rf /var/lib/apt/lists/*
+RUN apt update && apt install -y ffmpeg python3 git ssh && rm -rf /var/lib/apt/lists/*
 RUN useradd -m -d /home/container container
 
-# ユーザー権限で実行
 USER container
 WORKDIR /home/container
-
-# SSH設定フォルダを作成
 RUN mkdir -p /home/container/.ssh && chmod 700 /home/container/.ssh
 
-# GitHubのホストキーを事前に登録（画像5枚目のエラーを消す魔法）
-RUN ssh-keyscan github.com >> /home/container/.ssh/known_hosts
-
-# 鍵をコピー
+# 送信されたファイル名「id_ed25519」をコピーし、コンテナ内では標準的な「id_rsa」として扱う
 COPY --chown=container:container id_ed25519 /home/container/.ssh/id_rsa
 RUN chmod 600 /home/container/.ssh/id_rsa
+
+# GitHubを信頼できるホストとして登録
+RUN ssh-keyscan -t ed25519 github.com >> /home/container/.ssh/known_hosts
 
 CMD ["/bin/bash", "-c", "\
     git config --global --add safe.directory /home/container; \
@@ -22,4 +19,4 @@ CMD ["/bin/bash", "-c", "\
     git remote add origin git@github.com:tasiro0816/ryote-bot.git 2>/dev/null; \
     git remote set-url origin git@github.com:tasiro0816/ryote-bot.git; \
     git fetch --all && git reset --hard origin/main && npm i && \
-    node index.js || /bin/bash"]
+    ([ -f index.js ] && node index.js || /bin/bash)"]
