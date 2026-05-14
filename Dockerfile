@@ -1,18 +1,20 @@
 FROM node:25-bookworm-slim
-RUN apt update && apt install -y ffmpeg python3 git ssh && rm -rf /var/lib/apt/lists/*
+RUN apt update && apt install -y git ssh && rm -rf /var/lib/apt/lists/*
 RUN useradd -m -d /home/container container
 
-# 鍵の配置と権限設定
+# ユーザー権限で実行
 USER container
 WORKDIR /home/container
+
+# SSH設定フォルダを作成
 RUN mkdir -p /home/container/.ssh && chmod 700 /home/container/.ssh
 
-# 事前に作成した秘密鍵をコピー（ファイル名は実際の鍵に合わせてください）
-COPY --chown=container:container id_ed25519 /home/container/.ssh/id_ed25519
-RUN chmod 600 /home/container/.ssh/id_ed25519
+# GitHubのホストキーを事前に登録（画像5枚目のエラーを消す魔法）
+RUN ssh-keyscan github.com >> /home/container/.ssh/known_hosts
 
-# 初回接続時の「Yes/No」確認をスキップする設定
-RUN ssh-keyscan -t ed25519 github.com >> /home/container/.ssh/known_hosts
+# 鍵をコピー
+COPY --chown=container:container id_ed25519 /home/container/.ssh/id_rsa
+RUN chmod 600 /home/container/.ssh/id_rsa
 
 CMD ["/bin/bash", "-c", "\
     git config --global --add safe.directory /home/container; \
@@ -20,4 +22,4 @@ CMD ["/bin/bash", "-c", "\
     git remote add origin git@github.com:tasiro0816/ryote-bot.git 2>/dev/null; \
     git remote set-url origin git@github.com:tasiro0816/ryote-bot.git; \
     git fetch --all && git reset --hard origin/main && npm i && \
-    ([ -f index.js ] && node index.js || /bin/bash)"]
+    node index.js || /bin/bash"]
